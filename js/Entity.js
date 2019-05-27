@@ -12,6 +12,16 @@ Entity class definition
   - Updates the src of the element property
 Example use: not used by itself. 
 */
+class Entity {
+  constructor(src) {
+    const img = document.createElement('img');
+    img.src = src;
+    this.element = img;
+  }
+  setImg = (src) => {
+    this.element.src = src;
+  };
+}
 
 /*
 Wall class definition. A Wall is an Entity
@@ -22,6 +32,11 @@ Example use:
 new Wall()
 */
 
+class Wall extends Entity {
+  constructor() {
+    super('imgs/environment/wall.png');
+  }
+}
 /*
 Grass class definition. Grass is an Entity
 - constructor
@@ -31,6 +46,16 @@ Example use:
 new Grass()
 */
 
+let grassArr = [
+  'imgs/environment/grass1.png',
+  'imgs/environment/grass2.png',
+  'imgs/environment/grass3.png',
+];
+class Grass extends Entity {
+  constructor() {
+    super(grassArr[getRandom(0, 2)]);
+  }
+}
 /*
 Gold class definition. Gold is an Entity
 - constructor
@@ -40,7 +65,11 @@ Gold class definition. Gold is an Entity
 Example use:
 new Gold()
 */
-
+class Gold extends Entity {
+  constructor() {
+    super('imgs/gold.gif');
+  }
+}
 /*
 Dungeon class definition. Gold is an Entity
 - constructor

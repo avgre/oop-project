@@ -1,5 +1,48 @@
 //Create the Player class
-
+class Player extends Creature {
+  constructor(name, position, board, level, items, gold) {
+    super(name, 'imgs/player/front.png', level, items, gold);
+    this.name = name;
+    this.position = position;
+    this.board = board;
+    this.level = level;
+    this.items = items;
+    this.gold = gold;
+    this.exp = 0;
+  }
+  render = (root) => {
+    this.element.style.position = 'absolute';
+    this.element.style.left = ENTITY_SIZE * this.position.column + 'px';
+    this.element.style.top = ENTITY_SIZE * this.position.row + 'px';
+    root.appendChild(this.element);
+  };
+  update = () => {};
+  moveToPosition = (position) => {};
+  move = (direction) => {
+    switch (direction) {
+      case 'U': {
+        this.element.position.row = this.element.position.row - 1;
+        this.element.style.top = this.element.style.top - ENTITY_SIZE;
+      }
+      case 'D': {
+        this.element.position.row = this.element.position.row + 1;
+        this.element.style.top = this.element.style.top + ENTITY_SIZE;
+      }
+      case 'L': {
+        this.element.position.column = this.element.position.column - 1;
+        this.element.style.left = this.element.style.left - ENTITY_SIZE;
+      }
+      case 'R': {
+        this.element.position.column = this.element.position.column + 1;
+        this.element.style.left = this.element.style.left + ENTITY_SIZE;
+      }
+    }
+  };
+  pickup(entity) {}
+  attack(entity) {
+    super.attack();
+  }
+}
 /*
 Player class definition. Player is a Creature
 - constructor

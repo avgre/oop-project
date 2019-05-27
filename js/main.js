@@ -21,12 +21,17 @@ let GAME_STATE = 'PLAY';
 
 // init board
 // Create a board with 20 rows and 25 columns (can play around to test different sizes) and render it
-
+const board = new Board(20, 25);
+board.render(boardElement);
 // init player
 // create player at the center of the board with 2 items and render it
-
+player = new Player('Van', new Position(5, 5), board, 1);
+player.render(boardElement);
+console.log(player);
+monster = new Monster('Anti Fairy', 1, [], 0);
+console.log(monster);
 // Keep this, used to display the information on the box on the right of the board
-updateActionCam();
+//updateActionCam();
 
 // board entities
 
@@ -35,7 +40,17 @@ updateActionCam();
 // Create all the monsters entities and set them on the board at a random position
 // Give each monster a random name, random level (1-3), a potion (random rarity 0-3), random gold (0-50)
 // Give one monster the key
-for (let i = 0; i < MAX_MONSTERS; i++) {}
+for (let i = 0; i < MAX_MONSTERS; i++) {
+  board.setEntity(
+    new Monster(
+      MONSTER_NAMES[getRandom(0, MONSTER_NAMES.length - 1)],
+      getRandom(1, 3),
+      new Potion(1),
+      getRandom(0, 50)
+    ),
+    getRandomPosition(board)
+  );
+}
 
 // items
 // Add code to create a potion and a bomb entity and set them at a random board position
@@ -67,7 +82,16 @@ document.addEventListener('keydown', (ev) => {
 
 // UPDATE the function to return a random position on the board that is not occupied by an entity (Grass is fine) or the player's initial position (center)
 // The parameter is a Board object
-function getRandomPosition(board) {}
+function getRandomPosition(board) {
+  let potential = new Position(
+    getRandom(1, board.rows.length - 1),
+    getRandom(1, board.rows[1].length - 1)
+  );
+  console.log(potential);
+  if (board.getEntity(potential) instanceof Grass) {
+    return potential;
+  }
+}
 
 // UPDATE the function passed to setInterval to attack the player and trigger player death if hp is 0 or lower
 // The parameter is a Monster object

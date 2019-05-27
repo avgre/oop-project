@@ -1,5 +1,21 @@
 //Create the Creature and Monster class
-
+class Creature extends Entity {
+  constructor(name, img, level, items, gold) {
+    super(img);
+    this.name = name;
+    this.level = level;
+    this.items = [items];
+    this.gold = gold;
+    this.hp = level * 100;
+    this.strength = level * 10;
+    this.attackSpeed = 3000 / level;
+  }
+  getMaxHp = () => {
+    return level * 100;
+  };
+  hit = (entity) => {};
+  attack = (entity) => {};
+}
 /*
 The Creature class is an Entity. It has the following properties (not including inherited properties):
 - constructor
@@ -25,6 +41,24 @@ The Creature class is an Entity. It has the following properties (not including 
 Example use: not used by itself. 
 */
 
+class Monster extends Creature {
+  constructor(name, level, items, gold) {
+    super(
+      name,
+      'imgs/monsters/' + name.replace(/\s/g, '') + '.gif',
+      level,
+      items,
+      gold
+    );
+    this.name = name;
+    this.level = level;
+    this.items = items;
+    this.gold = gold;
+  }
+  attack = (entity) => {
+    super.attack(entity);
+  };
+}
 /*
 The Monster class is a Creature. It has the following properties (bot including inherited properties):
 - constructor

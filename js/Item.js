@@ -1,5 +1,23 @@
 //Create the Item, Potion, Bomb and Key class
+function returnImage(type) {
+  if (type === 'potion') {
+    return 'imgs/items/potion.png';
+  } else if (type === 'bomb') {
+    return 'imgs/items/bomb.png';
+  } else if (type === 'key') {
+    return 'imgs/items/key.png';
+  }
+}
 
+class Item extends Entity {
+  constructor(value, rarity, type) {
+    super(returnImage(type));
+    this.name = ITEM_RARITIES[rarity] + '' + type;
+    this.value = value;
+    this.rarity = rarity;
+    this.sound;
+  }
+}
 /*
 Item class definition. Item is an Entity
 - constructor
@@ -7,12 +25,22 @@ Item class definition. Item is an Entity
   - Creates an item with the correct image (depends on type).
   - Sets the name based on the rarity (with ITEM_RARITIES) and the type.
 - name (string)
-- value (number)
+- value (number)1812
 - rarity (number)
 - sound (Audio object - type is used for the sound file path)
 Example use: not used by itself. 
 */
-
+class Potion extends Item {
+  constructor(rarity) {
+    super((rarity + 1) * 10, rarity, 'potion');
+    this.potency = (rarity + 1) * 10;
+  }
+  use = (target) => {
+    let potentialHP = target.hp + this.potency;
+    let maxHP = target.getMaxHp();
+    target.hp = Math.min(potentialHP, maxHP);
+  };
+}
 /*
 Potion class definition. Potion is an Item
 - constructor

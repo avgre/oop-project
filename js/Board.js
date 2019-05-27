@@ -1,5 +1,10 @@
 //Create the Position and Board class
-
+class Position {
+  constructor(row, column) {
+    this.row = row;
+    this.column = column;
+  }
+}
 /*
 Position class definition
 - constructor
@@ -9,7 +14,43 @@ Position class definition
 Example use:
 const position = new Position(0, 0); // row 0, column 0
 */
-
+class Board {
+  constructor(rows, columns) {
+    this.rows = [];
+    this.root = document.getElementById('board');
+    for (let i = 0; i < rows; i++) {
+      this.rows.push([]);
+      for (let j = this.rows[i].length; j < columns; j++) {
+        if (i === 0 || i === rows - 1 || j === 0 || j === columns - 1) {
+          this.rows[i].push(new Wall());
+        } else {
+          this.rows[i].push(new Grass());
+        }
+      }
+    }
+  }
+  render = (root) => {
+    this.root = root;
+    for (let i = 0; i < this.rows.length; i++) {
+      let rowdiv = document.createElement('div');
+      rowdiv.classList.add('row');
+      for (let j = 0; j < this.rows[i].length; j++) {
+        rowdiv.appendChild(this.rows[i][j].element);
+      }
+      root.appendChild(rowdiv);
+    }
+  };
+  update = () => {};
+  setEntity = (entity, position) => {
+    const oldChild = this.root.childNodes[position.row].childNodes[
+      position.column
+    ];
+    this.root.childNodes[position.row].replaceChild(entity.element, oldChild);
+  };
+  getEntity = (position) => {
+    return this.rows[position.row][position.column];
+  };
+}
 /*
 Board class definition
 - constructor
@@ -27,6 +68,8 @@ Board class definition
 - setEntity (function)
   - parameters: entity (Entity), position (Position)
   - Sets the Entity object at the specified position and updates the Board (using the update method)
+  const oldChild = this.root.childNodes[0].childNodes[0];
+  this.root.childNodes[0].childNodes[0].replaceChild(entity.element, oldChild)
 - getEntity (function)
   - parameters: position (Position)
   - returns the Entity at the specified position
