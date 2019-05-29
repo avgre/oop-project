@@ -40,12 +40,12 @@ class Board {
       root.appendChild(rowdiv);
     }
   };
-  update = () => {};
   setEntity = (entity, position) => {
     const oldChild = this.root.childNodes[position.row].childNodes[
       position.column
     ];
     this.root.childNodes[position.row].replaceChild(entity.element, oldChild);
+    this.rows[position.row][position.column] = entity;
   };
   getEntity = (position) => {
     return this.rows[position.row][position.column];

@@ -31,7 +31,7 @@ console.log(player);
 monster = new Monster('Anti Fairy', 1, [], 0);
 console.log(monster);
 // Keep this, used to display the information on the box on the right of the board
-//updateActionCam();
+updateActionCam();
 
 // board entities
 
@@ -54,16 +54,45 @@ for (let i = 0; i < MAX_MONSTERS; i++) {
 
 // items
 // Add code to create a potion and a bomb entity and set them at a random board position
+board.setEntity(new Potion(getRandom(0, 3)), getRandomPosition(board));
+board.setEntity(new Bomb(getRandom(0, 3)), getRandomPosition(board));
 
 // gold
 // Add code to create a gold entity and place it at a random position on the board
 
+board.setEntity(new Gold(), getRandomPosition(board));
+board.setEntity(new Gold(), getRandomPosition(board));
 // dungeons
 // Add code for an opened dungeon and a closed dungeon you can loot (random position)
+board.setEntity(
+  new Dungeon(true, false, 30, [new Potion(2), new Bomb(2)]),
+  getRandomPosition(board)
+);
+board.setEntity(
+  new Dungeon(false, false, 30, [new Potion(1), new Bomb(1)]),
+  getRandomPosition(board)
+);
 // Add code for a dungeon that is closed and has the princess (random position)
-
+board.setEntity(
+  new Dungeon(false, true, 30, [new Potion(1), new Bomb(3)]),
+  getRandomPosition(board)
+);
 // tradesman
 // Add code for a tradesman with a potion of each rarity (0 to 3), bomb of each rarity and a key at a random position
+board.setEntity(
+  new Tradesman([
+    new Potion(0),
+    new Potion(1),
+    new Potion(2),
+    new Potion(3),
+    new Bomb(0),
+    new Bomb(1),
+    new Bomb(2),
+    new Bomb(3),
+    new Key(3),
+  ]),
+  getRandomPosition(board)
+);
 
 // event handlers
 
@@ -72,6 +101,19 @@ let monsterAttack;
 // Add code to check if the entity at the new player position (after move) is a monster. If so, call the encounterMonster function
 document.addEventListener('keydown', (ev) => {
   if (!ev.key.includes('Arrow') || GAME_STATE === 'GAME_OVER') return;
+  if (ev.key === 'ArrowLeft') {
+    player.move('L');
+  }
+  if (ev.key === 'ArrowRight') {
+    player.move('R');
+  }
+  if (ev.key === 'ArrowUp') {
+    player.move('U');
+  }
+  if (ev.key === 'ArrowDown') {
+    player.move('D');
+  }
+
   if (sounds.bg.paused) playMusic('bg');
   clearInterval(monsterAttack); // stop monster attack when player moves
 
@@ -83,14 +125,19 @@ document.addEventListener('keydown', (ev) => {
 // UPDATE the function to return a random position on the board that is not occupied by an entity (Grass is fine) or the player's initial position (center)
 // The parameter is a Board object
 function getRandomPosition(board) {
-  let potential = new Position(
-    getRandom(1, board.rows.length - 1),
-    getRandom(1, board.rows[1].length - 1)
-  );
-  console.log(potential);
-  if (board.getEntity(potential) instanceof Grass) {
-    return potential;
+  let position;
+  while (
+    !position ||
+    !(board.getEntity(position) instanceof Grass) ||
+    (position.row === player.position.row &&
+      position.column === player.position.column)
+  ) {
+    position = new Position(
+      getRandom(1, board.rows.length - 2),
+      getRandom(1, board.rows[1].length - 2)
+    );
   }
+  return position;
 }
 
 // UPDATE the function passed to setInterval to attack the player and trigger player death if hp is 0 or lower
@@ -121,7 +168,9 @@ function defeatMonster(monster) {
 }
 
 // UPDATE this function to set the board entity at position to a grass entity
-function clearEntity(position) {}
+function clearEntity(position) {
+  board.rows[position.row][position.column] = new Grass();
+}
 
 // DOM manipulation functions
 
@@ -129,7 +178,7 @@ function clearEntity(position) {}
 // It is called after an event happened (e.g. used item) to update the information shown in the action box
 // UPDATE the entity variable to be the entity at the player position
 function updateActionCam() {
-  const entity = null;
+  const entity = board.getEntity(player.position);
   actioncam.innerHTML = '';
   actioncam.appendChild(createActionView(entity));
   actioncam.appendChild(createActionView(player));
@@ -147,21 +196,24 @@ function createActionView(entity) {
   const infoWrapper = document.createElement('div');
 
   const name = document.createElement('h3');
+  name.innerText = entity.name ? entity.name : entity.constructor.name;
   // Add code here to set the name text to be the entity name or use the constructor name as fallback
   infoWrapper.appendChild(name);
 
-  if (true) createCreatureView(infoWrapper, entity);
-
-  if (true) {
+  if (entity instanceof Creature) createCreatureView(infoWrapper, entity);
+  console.log(entity, entity.value);
+  if (typeof entity.value === 'number') {
     const value = document.createElement('h4');
+    value.innerText = 'Value: ' + entity.value;
     // Add code here to set the value text to the entity's value e.g. "Value: 20"
     infoWrapper.appendChild(value);
   }
 
   // Add the entity image
   const img = document.createElement('img');
-  img.id = true ? 'player-cam' : 'entity-cam';
-  img.src = true ? 'imgs/player/attack.png' : 'entity image src';
+  img.id = entity instanceof Player ? 'player-cam' : 'entity-cam';
+  img.src =
+    entity instanceof Player ? 'imgs/player/attack.png' : entity.element.src;
   actionView.appendChild(infoWrapper);
   actionView.appendChild(img);
 
@@ -172,6 +224,7 @@ function createActionView(entity) {
 function createCreatureView(root, creature) {
   const level = document.createElement('h4');
   // Add code here to set the level text to the creature's level e.g. "Level 1"
+  level.innerText = 'Level ' + creature.level;
   const hp = document.createElement('h4');
   hp.id = creature.constructor.name + '-hp';
   // Add code here to set the hp text to the creature's hp e.g. "HP: 100"
@@ -215,7 +268,7 @@ function createMonsterMenu(root, monster) {
   attackBtn.textContent = 'Attack';
   // Add code here to reset the player attack timeout to allow the player to attack a monster as soon as one is encountered
   attackBtn.addEventListener('click', () => {
-    if (true) {
+    if (monster.hp <= 0) {
       updateActionCam();
     } else {
       attackBtn.disabled = true;
@@ -236,10 +289,20 @@ function createMonsterMenu(root, monster) {
 function createItemActions(root, monster) {
   const items = document.createElement('div');
   items.textContent = 'Items';
-  [].forEach((item) => {
+  player.items.forEach((item) => {
+    if (item instanceof Key) {
+      return;
+    }
     const itemBtn = document.createElement('button');
     // Add code here to set the itemBtn text to the item name
+    itemBtm.innerText = item.name;
     itemBtn.addEventListener('click', () => {
+      if (item.type === 'bomb') {
+        monster.useItem(item);
+      }
+      if (item.type === 'potion') {
+        player.useItem(item);
+      }
       updateActionCam();
     });
     items.appendChild(itemBtn);
@@ -340,4 +403,11 @@ function getRandom(min, max) {
 // removes an element from the array
 function remove(arr, element) {
   arr.splice(arr.indexOf(element), 1);
+}
+function search(nameKey, myArray) {
+  for (let i = 0; i < myArray.length; i++) {
+    if (myArray[i].type === nameKey) {
+      return i;
+    }
+  }
 }

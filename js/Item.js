@@ -12,7 +12,7 @@ function returnImage(type) {
 class Item extends Entity {
   constructor(value, rarity, type) {
     super(returnImage(type));
-    this.name = ITEM_RARITIES[rarity] + '' + type;
+    this.name = ITEM_RARITIES[rarity] + ' ' + type;
     this.value = value;
     this.rarity = rarity;
     this.sound;
@@ -39,6 +39,7 @@ class Potion extends Item {
     let potentialHP = target.hp + this.potency;
     let maxHP = target.getMaxHp();
     target.hp = Math.min(potentialHP, maxHP);
+    playSound('loot');
   };
 }
 /*
@@ -54,7 +55,21 @@ Potion class definition. Potion is an Item
 Example use:
 new Potion(0) // potion rarity 0
 */
-
+class Bomb extends Item {
+  constructor(rarity) {
+    super((rarity + 1) * 20, rarity, 'bomb');
+    this.damage = (rarity + 1) * 30;
+  }
+  use = (target) => {
+    let potentialHP = target.hp - this.damage;
+    if (potentialHP <= 0) {
+      target.hp = Math.max(potentialHP, 0);
+    } else {
+      target.hp = potentialHP;
+    }
+    playSound('loot');
+  };
+}
 /*
 Bomb class definition. Bomb is an Item
 - constructor
@@ -68,7 +83,17 @@ Bomb class definition. Bomb is an Item
 Example use:
 new Bomb(0) // bomb rarity 0
 */
-
+class Key extends Item {
+  constructor(rarity) {
+    super(100, 3, 'key');
+  }
+  use = (target) => {
+    target.isOpen = true;
+    if (target.hasPrinecss === false) {
+      playSound('loot');
+    }
+  };
+}
 /*
 Key class definition. Key is an Item
 - constructor

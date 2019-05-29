@@ -66,8 +66,9 @@ Example use:
 new Gold()
 */
 class Gold extends Entity {
-  constructor() {
+  constructor(value) {
     super('imgs/gold.gif');
+    this.value = value;
   }
 }
 /*
@@ -85,7 +86,21 @@ Dungeon class definition. Gold is an Entity
 Example use:
 new Dungeon(true, false, 30, [new Potion(2), new Bomb(2)]);
 */
-
+class Dungeon extends Entity {
+  constructor(isOpen, hasPrincess, gold, items) {
+    super(
+      isOpen === true ? 'imgs/dungeon/open.png' : 'imgs/dungeon/closed.png'
+    );
+    this.isOpen = isOpen;
+    this.hasPrincess = hasPrincess;
+    this.gold = gold;
+    this.items = items;
+    this.open = () => {
+      this.isOpen = true;
+      this.element.src = 'imgs/dungeon/open.png';
+    };
+  }
+}
 /*
 Tradesman class definition. A Tradesman is an Entity
 - constructor
@@ -95,3 +110,9 @@ Tradesman class definition. A Tradesman is an Entity
 Example use:
 new Tradesman([new Potion(0), new Bomb(0), new Key()]);
 */
+class Tradesman extends Entity {
+  constructor(items) {
+    super('imgs/tradesman.gif');
+    this.items = items;
+  }
+}

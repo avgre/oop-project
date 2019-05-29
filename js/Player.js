@@ -12,36 +12,67 @@ class Player extends Creature {
   }
   render = (root) => {
     this.element.style.position = 'absolute';
+    root.appendChild(this.element);
+    this.update();
+  };
+  update = () => {
     this.element.style.left = ENTITY_SIZE * this.position.column + 'px';
     this.element.style.top = ENTITY_SIZE * this.position.row + 'px';
-    root.appendChild(this.element);
   };
-  update = () => {};
-  moveToPosition = (position) => {};
+  moveToPosition = (position) => {
+    if (board.getEntity(position) instanceof Wall) {
+      return;
+    }
+    player.position = position;
+  };
   move = (direction) => {
     switch (direction) {
       case 'U': {
-        this.element.position.row = this.element.position.row - 1;
-        this.element.style.top = this.element.style.top - ENTITY_SIZE;
+        this.moveToPosition(
+          new Position(this.position.row - 1, this.position.column)
+        );
+        this.setImg('imgs/player/back.png');
+        break;
       }
       case 'D': {
-        this.element.position.row = this.element.position.row + 1;
-        this.element.style.top = this.element.style.top + ENTITY_SIZE;
+        this.moveToPosition(
+          new Position(this.position.row + 1, this.position.column)
+        );
+        this.setImg('imgs/player/front.png');
+        break;
       }
       case 'L': {
-        this.element.position.column = this.element.position.column - 1;
-        this.element.style.left = this.element.style.left - ENTITY_SIZE;
+        this.moveToPosition(
+          new Position(this.position.row, this.position.column - 1)
+        );
+        this.setImg('imgs/player/left.png');
+        break;
       }
       case 'R': {
-        this.element.position.column = this.element.position.column + 1;
-        this.element.style.left = this.element.style.left + ENTITY_SIZE;
+        this.moveToPosition(
+          new Position(this.position.row, this.position.column + 1)
+        );
+        this.setImg('imgs/player/right.png');
+        break;
       }
     }
+    this.update();
   };
   pickup(entity) {}
   attack(entity) {
     super.attack();
   }
+  buy(item, tradesman) {}
+  sell(item, tradesman) {}
+  useItem(item, target) {
+    item.use(target);
+    index = search(item, player.items);
+    player.items.splice(index, 1);
+  }
+  loot(entity) {}
+  getExpToLevel() {}
+  getExp(entity) {}
+  levelUp(entity) {}
 }
 /*
 Player class definition. Player is a Creature
