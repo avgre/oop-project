@@ -58,7 +58,13 @@ class Player extends Creature {
     }
     this.update();
   };
-  pickup(entity) {}
+  pickup(entity) {
+    if (entity instanceof Gold) {
+      this.gold = this.gold + entity.value;
+    } else {
+      this.items = player.items.concat(entity.items);
+    }
+  }
   attack(entity) {
     super.attack();
   }
@@ -66,18 +72,31 @@ class Player extends Creature {
   sell(item, tradesman) {}
   useItem(item, target) {
     item.use(target);
-    index = search(item, player.items);
-    player.items.splice(index, 1);
+    index = search(item, this.items);
+    this.items.splice(index, 1);
   }
   loot(entity) {
-    player.items = player.items.concat(entity.items);
+    this.items = this.items.concat(entity.items);
     entity.items = [];
-    player.gold = player.gold + entity.gold;
+    this.gold = this.gold + entity.gold;
     entity.gold = 0;
   }
-  getExpToLevel() {}
-  getExp(entity) {}
-  levelUp(entity) {}
+  getExpToLevel() {
+    return level * 10;
+  }
+  getExp(entity) {
+    this.exp = this.exp + entity.level * 10;
+    if (this.exp >= this.getExpToLevel()) {
+      this.levelUp();
+    }
+  }
+  levelUp(entity) {
+    this.level = this.level + 1;
+    this.hp = this.getMaxHp();
+    this.strength = this.level * 10;
+    this.attackSpeed = 3000 / this.level;
+    playSound('levelup');
+  }
 }
 /*
 Player class definition. Player is a Creature

@@ -9,6 +9,7 @@ class Creature extends Entity {
     this.hp = level * 100;
     this.strength = level * 10;
     this.attackSpeed = 3000 / level;
+    this.isAttacking = false;
   }
   getMaxHp = () => {
     return level * 100;
@@ -22,7 +23,14 @@ class Creature extends Entity {
     }
   };
   attack = (entity) => {
-    hit(entity.strength);
+    if (this.isAttacking) {
+      return false;
+    }
+    this.isAttacking = true;
+    setTimeout(() => {
+      entity.hit(this.strength);
+      this.isAttacking = false;
+    }, this.attackSpeed);
   };
 }
 /*
