@@ -27,7 +27,10 @@ board.render(boardElement);
 // create player at the center of the board with 2 items and render it
 player = new Player(
   'Van',
-  new Position(5, 5),
+  new Position(
+    Math.floor(board.rows.length / 2),
+    Math.floor(board.rows[0].length / 2)
+  ),
   board,
   1,
   [new Potion(1), new Bomb(2), new Key(3)],
