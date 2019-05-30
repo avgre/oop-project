@@ -61,28 +61,49 @@ class Player extends Creature {
   pickup(entity) {
     if (entity instanceof Gold) {
       this.gold = this.gold + entity.value;
+      playSound('gold');
     } else {
-      this.items = player.items.concat(entity.items);
+      this.items.push(entity);
+      playSound('loot');
     }
   }
   attack(entity) {
-    super.attack();
+    super.attack(entity);
   }
-  buy(item, tradesman) {}
-  sell(item, tradesman) {}
+  buy(item, tradesman) {
+    if (this.gold < item.value) {
+      return false;
+    } else {
+      this.gold = this.gold - item.value;
+      player.items.push(item);
+      remove(tradesman.items, item);
+      playSound('trade');
+    }
+  }
+  sell(item, tradesman) {
+    if (tradesman.gold < item.value) {
+      return false;
+    } else {
+      this.gold = this.gold + item.value;
+      tradesman.items.push(item);
+      remove(this.items, item);
+      playSound('trade');
+    }
+  }
   useItem(item, target) {
     item.use(target);
-    index = search(item, this.items);
-    this.items.splice(index, 1);
+    remove(this.items, item);
   }
   loot(entity) {
     this.items = this.items.concat(entity.items);
     entity.items = [];
     this.gold = this.gold + entity.gold;
     entity.gold = 0;
+    playSound('loot');
+    return;
   }
   getExpToLevel() {
-    return level * 10;
+    return this.level * 10;
   }
   getExp(entity) {
     this.exp = this.exp + entity.level * 10;

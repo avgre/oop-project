@@ -9,10 +9,9 @@ class Creature extends Entity {
     this.hp = level * 100;
     this.strength = level * 10;
     this.attackSpeed = 3000 / level;
-    this.isAttacking = false;
   }
   getMaxHp = () => {
-    return level * 100;
+    return this.level * 100;
   };
   hit = (val) => {
     let potentialHP = this.hp - val;
@@ -22,16 +21,16 @@ class Creature extends Entity {
       this.hp = potentialHP;
     }
   };
-  attack = (entity) => {
-    if (this.isAttacking) {
-      return false;
-    }
-    this.isAttacking = true;
-    setTimeout(() => {
+  attack(entity) {
+    this.isAttacking = false;
+    if (this.isAttacking === false) {
       entity.hit(this.strength);
-      this.isAttacking = false;
+      this.isAttacking = true;
+    }
+    setTimeout(() => {
+      return (this.isAttacking = false);
     }, this.attackSpeed);
-  };
+  }
 }
 /*
 The Creature class is an Entity. It has the following properties (not including inherited properties):

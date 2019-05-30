@@ -30,7 +30,7 @@ player = new Player(
   new Position(5, 5),
   board,
   1,
-  (new Potion(1), new Bomb(2)),
+  [new Potion(1), new Bomb(2), new Key(3)],
   50
 );
 player.render(boardElement);
@@ -106,6 +106,8 @@ let monsterAttack;
 // Add code to check if the entity at the new player position (after move) is a monster. If so, call the encounterMonster function
 document.addEventListener('keydown', (ev) => {
   if (!ev.key.includes('Arrow') || GAME_STATE === 'GAME_OVER') return;
+  if (sounds.bg.paused) playMusic('bg');
+  clearInterval(monsterAttack); // stop monster attack when player moves
   if (ev.key === 'ArrowLeft') {
     player.move('L');
   }
@@ -118,9 +120,9 @@ document.addEventListener('keydown', (ev) => {
   if (ev.key === 'ArrowDown') {
     player.move('D');
   }
-
-  if (sounds.bg.paused) playMusic('bg');
-  clearInterval(monsterAttack); // stop monster attack when player moves
+  if (board.getEntity(player.position) instanceof Monster) {
+    encounterMonster(board.getEntity(player.position));
+  }
 
   updateActionCam();
 });
@@ -152,10 +154,11 @@ function getRandomPosition(board) {
 function encounterMonster(monster) {
   playMusic('battle');
   monsterAttack = setInterval(() => {
-    player.attack(board.getEntity(player.position));
-    document.getElementById('Player-hp').textContent = `HP: ${player.hp}`;
     if (player.hp <= 0) {
       playerDeath();
+    } else {
+      monster.attack(player);
+      document.getElementById('Player-hp').textContent = `HP: ${player.hp}`;
     }
   }, monster.attackSpeed);
 }
@@ -173,13 +176,15 @@ function playerDeath() {
 // UPDATE this function to getExp from monster, loot the monster, and clear the entity (monster) at the player position
 function defeatMonster(monster) {
   player.getExp(monster);
+  player.loot(monster);
+  clearEntity(player.position);
   clearInterval(monsterAttack);
   playMusic('bg');
 }
 
 // UPDATE this function to set the board entity at position to a grass entity
 function clearEntity(position) {
-  board.rows[position.row][position.column] = new Grass();
+  board.setEntity(new Grass(), position);
 }
 
 // DOM manipulation functions
@@ -211,7 +216,6 @@ function createActionView(entity) {
   infoWrapper.appendChild(name);
 
   if (entity instanceof Creature) createCreatureView(infoWrapper, entity);
-  console.log(entity, entity.value);
   if (typeof entity.value === 'number') {
     const value = document.createElement('h4');
     value.innerText = 'Value: ' + entity.value;
@@ -257,6 +261,10 @@ function createActionMenu(entity) {
     createMonsterMenu(actionMenu, entity);
   } else if (entity instanceof Tradesman) {
     createTradeMenu(actionMenu, entity);
+  } else if (entity instanceof Dungeon) {
+    createDungeonMenu(actionMenu, entity);
+  } else if (entity instanceof Gold) {
+    createPickupMenu(actionMenu, entity);
   }
   return actionMenu;
 }
@@ -270,7 +278,7 @@ function createPickupMenu(root, entity) {
   pickupBtn.textContent = 'Pickup';
   pickupBtn.addEventListener('click', () => {
     player.pickup(entity);
-    clearEntity(entity.position);
+    clearEntity(player.position);
     updateActionCam();
   });
   actions.appendChild(pickupBtn);
@@ -282,7 +290,7 @@ function createPickupMenu(root, entity) {
 // Update the if condition to execute only if the monster hp is 0 or lower. When true, call defeatMonster. DONE
 // Replace the timeout value (1000) passed to disable the attackBtn to be the player's attack speed DONE
 function createMonsterMenu(root, monster) {
-  if (player.items.length >= 1) {
+  if (player.items.length > 0) {
     createItemActions(root, monster);
   }
   const actions = document.createElement('div');
@@ -291,8 +299,9 @@ function createMonsterMenu(root, monster) {
   attackBtn.textContent = 'Attack';
   // Add code here to reset the player attack timeout to allow the player to attack a monster as soon as one is encountered
   attackBtn.addEventListener('click', () => {
+    clearTimeout(player.attack);
+    player.attack(monster);
     if (monster.hp <= 0) {
-      player.attack(monster);
       defeatMonster(monster);
       updateActionCam();
     } else {
@@ -320,11 +329,11 @@ function createItemActions(root, monster) {
     }
     const itemBtn = document.createElement('button');
     // Add code here to set the itemBtn text to the item name DONE
-    itemBtm.innerText = item.name;
+    itemBtn.innerText = item.name;
     itemBtn.addEventListener('click', () => {
-      if (item.type === 'bomb') {
+      if (item instanceof Bomb) {
         player.useItem(item, monster);
-      } else if (item.type === 'potion') {
+      } else if (item instanceof Potion) {
         player.useItem(item, player);
       } else if (monster.hp <= 0) {
         defeatMonster(monster);
@@ -348,17 +357,17 @@ function createTradeMenu(root, tradesman) {
     const itemBtn = document.createElement('button');
     // Add code here to set the item text to the item's name and value e.g. "Common potion - 10G" DONE
     itemBtn.innerText = item.name + ' ' + item.value + 'G';
-    while (player.gold < item.value) {
+    if (player.gold < item.value) {
       itemBtn.style.pointerEvents = 'none';
+      itemBtn.style.opacity = 0.5;
+    } else {
+      itemBtn.addEventListener('click', () => {
+        player.buy(item, tradesman);
+        updateActionCam();
+      });
     }
     // Add code here to set itemBtn to disabled if the player does not have enough gold for the item DONE
-    itemBtn.addEventListener('click', () => {
-      while (player.gold < item.value) {
-        itemBtn.style.pointerEvents = none;
-      }
-      player.buy(item);
-      updateActionCam();
-    });
+
     buyAction.appendChild(itemBtn);
   });
   const sellAction = document.createElement('div');
@@ -368,7 +377,7 @@ function createTradeMenu(root, tradesman) {
     itemBtn.innerText = item.name + ' ' + item.value + 'G';
     // Add code here to set the item text to the item's name and value e.g. "Common potion - 10G" DONE
     itemBtn.addEventListener('click', () => {
-      player.sell(item);
+      player.sell(item, tradesman);
       updateActionCam();
     });
     sellAction.appendChild(itemBtn);
@@ -388,12 +397,19 @@ function createDungeonMenu(root, dungeon) {
   if (dungeon.isOpen === false) {
     const openBtn = document.createElement('button');
     openBtn.textContent = 'Open';
-    // Add code to get the key from the player items
-    // If the player does not have a key, set the openBtn to disabled
-    openBtn.addEventListener('click', () => {
-      player.useItem(item());
-      updateActionCam();
-    });
+    // Add code to get the key from the player items DONE
+    // If the player does not have a key, set the openBtn to disabled DONE
+    let keyToUse = searchForKey(player.items);
+    if (keyToUse instanceof Key) {
+      openBtn.addEventListener('click', () => {
+        player.useItem(keyToUse, dungeon);
+        updateActionCam();
+        remove(player.items, keyToUse);
+      });
+    } else {
+      openBtn.style.pointerEvents = 'none';
+      openBtn.style.opacity = 0.5;
+    }
     actions.appendChild(openBtn);
     root.appendChild(actions);
   } else {
@@ -408,8 +424,14 @@ function createDungeonMenu(root, dungeon) {
       lootBtn.textContent = 'Loot';
       // Add code here to check if the dungeon has gold or items, if not set the lootBtn to disabled
       lootBtn.addEventListener('click', () => {
-        player.loot(dungeon);
-        updateActionCam();
+        if (dungeon.items.length === 0 && dungeon.gold === 0) {
+          lootBtn.style.pointerEvents = 'none';
+          lootBtn.style.opacity = 0.5;
+          updateActionCam();
+        } else {
+          player.loot(dungeon);
+          updateActionCam();
+        }
       });
       actions.appendChild(lootBtn);
       root.appendChild(actions);
@@ -446,6 +468,13 @@ function search(nameKey, myArray) {
   for (let i = 0; i < myArray.length; i++) {
     if (myArray[i].type === nameKey) {
       return i;
+    }
+  }
+}
+function searchForKey(myArray) {
+  for (let i = 0; i < myArray.length; i++) {
+    if (myArray[i] instanceof Key) {
+      return myArray[i];
     }
   }
 }

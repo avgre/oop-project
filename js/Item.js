@@ -67,7 +67,7 @@ class Bomb extends Item {
     } else {
       target.hp = potentialHP;
     }
-    playSound('loot');
+    playSound('pattack');
   };
 }
 /*
