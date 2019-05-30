@@ -25,11 +25,16 @@ const board = new Board(20, 25);
 board.render(boardElement);
 // init player
 // create player at the center of the board with 2 items and render it
-player = new Player('Van', new Position(5, 5), board, 1);
+player = new Player(
+  'Van',
+  new Position(5, 5),
+  board,
+  1,
+  (new Potion(1), new Bomb(2)),
+  50
+);
 player.render(boardElement);
 console.log(player);
-monster = new Monster('Anti Fairy', 1, [], 0);
-console.log(monster);
 // Keep this, used to display the information on the box on the right of the board
 updateActionCam();
 
@@ -142,13 +147,17 @@ function getRandomPosition(board) {
 
 // UPDATE the function passed to setInterval to attack the player and trigger player death if hp is 0 or lower
 // The parameter is a Monster object
-// Replace the interval time of 1000 by the monster attack speed
-// Replace the hp printed to be the player's hp
+// Replace the interval time of 1000 by the monster attack speed DONE
+// Replace the hp printed to be the player's hp DONE
 function encounterMonster(monster) {
   playMusic('battle');
   monsterAttack = setInterval(() => {
-    document.getElementById('Player-hp').textContent = `HP: ${100}`;
-  }, 1000);
+    player.attack(board.getEntity(player.position));
+    document.getElementById('Player-hp').textContent = `HP: ${player.hp}`;
+    if (player.hp <= 0) {
+      playerDeath();
+    }
+  }, monster.attackSpeed);
 }
 
 // Use when the player is dead, no need to change anything
@@ -197,7 +206,7 @@ function createActionView(entity) {
 
   const name = document.createElement('h3');
   name.innerText = entity.name ? entity.name : entity.constructor.name;
-  // Add code here to set the name text to be the entity name or use the constructor name as fallback
+  // Add code here to set the name text to be the entity name or use the constructor name as fallback DONE
   infoWrapper.appendChild(name);
 
   if (entity instanceof Creature) createCreatureView(infoWrapper, entity);
@@ -205,7 +214,7 @@ function createActionView(entity) {
   if (typeof entity.value === 'number') {
     const value = document.createElement('h4');
     value.innerText = 'Value: ' + entity.value;
-    // Add code here to set the value text to the entity's value e.g. "Value: 20"
+    // Add code here to set the value text to the entity's value e.g. "Value: 20" DONE
     infoWrapper.appendChild(value);
   }
 
@@ -228,8 +237,10 @@ function createCreatureView(root, creature) {
   const hp = document.createElement('h4');
   hp.id = creature.constructor.name + '-hp';
   // Add code here to set the hp text to the creature's hp e.g. "HP: 100"
+  hp.innerText = 'HP: ' + creature.hp;
   const gold = document.createElement('h4');
   // Add code here to set the gold text to the creature's gold e.g. "Gold: 10"
+  gold.innerText = 'Gold: ' + creature.gold;
   root.appendChild(hp);
   root.appendChild(level);
   root.appendChild(gold);
@@ -259,9 +270,12 @@ function createPickupMenu(root, entity) {
 
 // UPDATE this function to add a call to createItemActions(root, monster) if the player has items
 // Update the attackBtn event listener to attack the monster
-// Update the if condition to execute only if the monster hp is 0 or lower. When true, call defeatMonster.
-// Replace the timeout value (1000) passed to disable the attackBtn to be the player's attack speed
+// Update the if condition to execute only if the monster hp is 0 or lower. When true, call defeatMonster. DONE
+// Replace the timeout value (1000) passed to disable the attackBtn to be the player's attack speed DONE
 function createMonsterMenu(root, monster) {
+  if (player.items.length >= 1) {
+    createItemActions(root, monster);
+  }
   const actions = document.createElement('div');
   actions.textContent = 'Actions';
   let attackBtn = document.createElement('button');
@@ -269,12 +283,14 @@ function createMonsterMenu(root, monster) {
   // Add code here to reset the player attack timeout to allow the player to attack a monster as soon as one is encountered
   attackBtn.addEventListener('click', () => {
     if (monster.hp <= 0) {
+      player.attack(monster);
+      defeatMonster(monster);
       updateActionCam();
     } else {
       attackBtn.disabled = true;
-      setTimeout(() => (attackBtn.disabled = false), 1000);
-      // Replace the hp printed to be the monster's hp
-      document.getElementById('Monster-hp').textContent = `HP: ${100}`;
+      setTimeout(() => (attackBtn.disabled = false), player.attackSpeed);
+      // Replace the hp printed to be the monster's hp DONE
+      document.getElementById('Monster-hp').textContent = `HP: ${monster.hp}`;
     }
   });
   actions.appendChild(attackBtn);
@@ -298,10 +314,10 @@ function createItemActions(root, monster) {
     itemBtm.innerText = item.name;
     itemBtn.addEventListener('click', () => {
       if (item.type === 'bomb') {
-        monster.useItem(item);
+        player.useItem(item, monster);
       }
       if (item.type === 'potion') {
-        player.useItem(item);
+        player.useItem(item, player);
       }
       updateActionCam();
     });
@@ -318,9 +334,13 @@ function createItemActions(root, monster) {
 function createTradeMenu(root, tradesman) {
   const buyAction = document.createElement('div');
   buyAction.textContent = 'Buy';
-  [].forEach((item) => {
+  tradesman.items.forEach((item) => {
     const itemBtn = document.createElement('button');
     // Add code here to set the item text to the item's name and value e.g. "Common potion - 10G"
+    itemBtn.innerText = item.name + ' ' + item.value + 'G';
+    while (player.gold < item.value) {
+      itemBtn.style.pointerEvents = none;
+    }
     // Add code here to set itemBtn to disabled if the player does not have enough gold for the item
     itemBtn.addEventListener('click', () => {
       updateActionCam();
@@ -329,7 +349,7 @@ function createTradeMenu(root, tradesman) {
   });
   const sellAction = document.createElement('div');
   sellAction.textContent = 'Sell';
-  [].forEach((item) => {
+  player.items.forEach((item) => {
     const itemBtn = document.createElement('button');
     // Add code here to set the item text to the item's name and value e.g. "Common potion - 10G"
     itemBtn.addEventListener('click', () => {
@@ -345,22 +365,23 @@ function createTradeMenu(root, tradesman) {
 // Update the condition to create the openBtn only if the dungeon is not open
 // Update the if condition inside the else block to only win the game if the dungeon has the princess
 // Update the openBtn event listener to use the key item on the dungeon
-// Update the lootBtn event listener to loot the dungeon
+// Update the lootBtn event listener to loot the dungeonMAYBEDONE
 function createDungeonMenu(root, dungeon) {
   const actions = document.createElement('div');
   actions.textContent = 'Actions';
-  if (true) {
+  if (dungeon.isOpen === false) {
     const openBtn = document.createElement('button');
     openBtn.textContent = 'Open';
     // Add code to get the key from the player items
     // If the player does not have a key, set the openBtn to disabled
     openBtn.addEventListener('click', () => {
+      player.useItem(item());
       updateActionCam();
     });
     actions.appendChild(openBtn);
     root.appendChild(actions);
   } else {
-    if (true) {
+    if (dungeon.hasPrincess === true) {
       boardElement.innerHTML =
         '<h1>You WIN!</h1><img src="imgs/dungeon/princess.png" width=500/>';
       actioncam.style.display = 'none';
@@ -371,6 +392,7 @@ function createDungeonMenu(root, dungeon) {
       lootBtn.textContent = 'Loot';
       // Add code here to check if the dungeon has gold or items, if not set the lootBtn to disabled
       lootBtn.addEventListener('click', () => {
+        player.loot(dungeon);
         updateActionCam();
       });
       actions.appendChild(lootBtn);

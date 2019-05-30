@@ -69,7 +69,12 @@ class Player extends Creature {
     index = search(item, player.items);
     player.items.splice(index, 1);
   }
-  loot(entity) {}
+  loot(entity) {
+    player.items = player.items.concat(entity.items);
+    entity.items = [];
+    player.gold = player.gold + entity.gold;
+    entity.gold = 0;
+  }
   getExpToLevel() {}
   getExp(entity) {}
   levelUp(entity) {}

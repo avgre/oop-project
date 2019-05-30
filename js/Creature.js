@@ -13,8 +13,17 @@ class Creature extends Entity {
   getMaxHp = () => {
     return level * 100;
   };
-  hit = (entity) => {};
-  attack = (entity) => {};
+  hit = (val) => {
+    let potentialHP = this.hp - val;
+    if (potentialHP <= 0) {
+      this.hp = Math.max(potentialHP, 0);
+    } else {
+      this.hp = potentialHP;
+    }
+  };
+  attack = (entity) => {
+    hit(entity.strength);
+  };
 }
 /*
 The Creature class is an Entity. It has the following properties (not including inherited properties):
