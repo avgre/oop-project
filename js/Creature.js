@@ -73,6 +73,7 @@ class Monster extends Creature {
   }
   attack = (entity) => {
     super.attack(entity);
+    playSound('mattack');
   };
 }
 /*

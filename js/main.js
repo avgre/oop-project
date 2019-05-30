@@ -403,6 +403,7 @@ function createDungeonMenu(root, dungeon) {
     if (keyToUse instanceof Key) {
       openBtn.addEventListener('click', () => {
         player.useItem(keyToUse, dungeon);
+        dungeon.element.src = 'imgs/dungeon/open.png';
         updateActionCam();
         remove(player.items, keyToUse);
       });
@@ -422,16 +423,12 @@ function createDungeonMenu(root, dungeon) {
     } else {
       const lootBtn = document.createElement('button');
       lootBtn.textContent = 'Loot';
-      // Add code here to check if the dungeon has gold or items, if not set the lootBtn to disabled
+      if (dungeon.items.length === 0 && dungeon.gold === 0) {
+        lootBtn.disabled = true;
+      }
       lootBtn.addEventListener('click', () => {
-        if (dungeon.items.length === 0 && dungeon.gold === 0) {
-          lootBtn.style.pointerEvents = 'none';
-          lootBtn.style.opacity = 0.5;
-          updateActionCam();
-        } else {
-          player.loot(dungeon);
-          updateActionCam();
-        }
+        player.loot(dungeon);
+        lootBtn.disabled = true;
       });
       actions.appendChild(lootBtn);
       root.appendChild(actions);

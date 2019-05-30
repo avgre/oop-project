@@ -69,6 +69,7 @@ class Player extends Creature {
   }
   attack(entity) {
     super.attack(entity);
+    playSound('pattack');
   }
   buy(item, tradesman) {
     if (this.gold < item.value) {
